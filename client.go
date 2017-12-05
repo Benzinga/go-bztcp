@@ -72,7 +72,7 @@ func NewConn(socket net.Conn, user, key string) (*Conn, error) {
 // Stream watches the connection, calling the cb function whenever it
 // encounters a stream message. This function will exit when the connection
 // closes, or when the context is closed. If the context is closed, the
-// connection will remain open and reusable.
+// connection will be closed.
 func (c *Conn) Stream(ctx context.Context, cb func(d StreamData)) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -87,6 +87,7 @@ func (c *Conn) Stream(ctx context.Context, cb func(d StreamData)) error {
 			case <-t.C:
 				c.Send("PING", PingData{time.Now().Format(TimeFormat)})
 			case <-ctx.Done():
+				c.socket.Close()
 				return
 			}
 		}
@@ -94,12 +95,21 @@ func (c *Conn) Stream(ctx context.Context, cb func(d StreamData)) error {
 
 	// Read loop
 	for {
+		// Read next message.
 		msg, err := c.Recv()
+
+		// Discard error if the context was closed while reading.
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
 
 		if err != nil {
 			return err
 		}
 
+		// Interpret and handle message.
 		switch msg.Status {
 		case "PONG":
 			// do nothing
