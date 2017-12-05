@@ -11,10 +11,11 @@ import (
 	bztcp "github.com/Benzinga/go-bztcp"
 )
 
-const defaultAddr = "tcp-v1.benzinga.com:11337"
+const defaultAddr = "tcp-v1-1.benzinga.com:11337"
 
 func main() {
 	var addr, user, key string
+	var tls bool
 
 	// Set up logging.
 	log.SetFlags(log.Lshortfile)
@@ -27,10 +28,16 @@ func main() {
 	flag.StringVar(&addr, "addr", defaultAddr, "address of bztcp server")
 	flag.StringVar(&user, "user", "", "username to authenticate with")
 	flag.StringVar(&key, "key", "", "key to authenticate with")
+	flag.BoolVar(&tls, "tls", false, "whether or not to use TLS")
 	flag.Parse()
 
+	dialer := bztcp.Dial
+	if tls {
+		dialer = bztcp.DialTLS
+	}
+
 	// Dial server.
-	conn, err := bztcp.Dial(addr, user, key)
+	conn, err := dialer(addr, user, key)
 	if err != nil {
 		log.Fatalln(err)
 	}

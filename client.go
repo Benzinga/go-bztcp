@@ -3,6 +3,7 @@ package bztcp
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"net"
 	"time"
@@ -19,9 +20,25 @@ func Dial(addr, user, key string) (*Conn, error) {
 	return DialTimeout(addr, user, key, AuthTimeout)
 }
 
+// DialTLS connects to a Benzinga TCP server using TLS.
+func DialTLS(addr, user, key string) (*Conn, error) {
+	return DialTimeoutTLS(addr, user, key, AuthTimeout)
+}
+
 // DialTimeout connects to Benzinga TCP with a timeout.
 func DialTimeout(addr, user, key string, d time.Duration) (*Conn, error) {
 	socket, err := net.DialTimeout("tcp", addr, d)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewConn(socket, user, key)
+}
+
+// DialTimeoutTLS connects to Benzinga TCP with a timeout using TLS.
+func DialTimeoutTLS(addr, user, key string, d time.Duration) (*Conn, error) {
+	socket, err := tls.DialWithDialer(&net.Dialer{Timeout: d}, "tcp", addr, nil)
 
 	if err != nil {
 		return nil, err
