@@ -50,6 +50,11 @@ type PongData struct {
 	PingTime   string `json:"pingTime"`
 }
 
+// Author represents an author
+type Author struct {
+	Name string `json:"name"`
+}
+
 // TickerData contains a symbol associated with a STREAM message.
 type TickerData struct {
 	Name      string `json:"name"`
@@ -66,6 +71,7 @@ type StreamData struct {
 	ID          int         `json:"id"`
 	Title       string      `json:"title"`
 	Body        string      `json:"body"`
+	Authors     []Author    `json:"authors,omitempty"`
 	PublishedAt string      `json:"published"`
 	UpdatedAt   string      `json:"updated"`
 	Channels    []string    `json:"channels"`
