@@ -25,6 +25,7 @@ linters-settings:
       - experimental
     disabled-checks:
       - wrapperFunc
+      - exitAfterDefer
 
 linters:
   enable-all: true
@@ -35,4 +36,3 @@ linters:
     - gomnd
     - goerr113
     - funlen
-    - gocritic:exitAfterDefer
