@@ -28,7 +28,6 @@ func DialTLS(addr, user, key string) (*Conn, error) {
 // DialTimeout connects to Benzinga TCP with a timeout.
 func DialTimeout(addr, user, key string, d time.Duration) (*Conn, error) {
 	socket, err := net.DialTimeout("tcp", addr, d)
-
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +38,6 @@ func DialTimeout(addr, user, key string, d time.Duration) (*Conn, error) {
 // DialTimeoutTLS connects to Benzinga TCP with a timeout using TLS.
 func DialTimeoutTLS(addr, user, key string, d time.Duration) (*Conn, error) {
 	socket, err := tls.DialWithDialer(&net.Dialer{Timeout: d}, "tcp", addr, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +56,15 @@ func NewConn(socket net.Conn, user, key string) (*Conn, error) {
 	err := conn.authenticate(user, key)
 	if err != nil {
 		socket.Close()
+
 		return nil, err
 	}
 
 	// Attempt to enable TCP keep alive.
 	if tcpconn, ok := socket.(*net.TCPConn); ok {
-		tcpconn.SetKeepAlive(true)
+		if err := tcpconn.SetKeepAlive(true); err != nil {
+			return nil, err
+		}
 	}
 
 	return &conn, nil
@@ -85,9 +86,12 @@ func (c *Conn) Stream(ctx context.Context, cb func(d StreamData)) error {
 		for {
 			select {
 			case <-t.C:
-				c.Send("PING", PingData{time.Now().Format(TimeFormat)})
+				if err := c.Send("PING", PingData{time.Now().Format(TimeFormat)}); err != nil {
+					return
+				}
 			case <-ctx.Done():
 				c.socket.Close()
+
 				return
 			}
 		}
@@ -115,8 +119,8 @@ func (c *Conn) Stream(ctx context.Context, cb func(d StreamData)) error {
 			// do nothing
 		case "STREAM":
 			data := StreamData{}
-			err := json.Unmarshal(msg.Data, &data)
 
+			err := json.Unmarshal(msg.Data, &data)
 			if err != nil {
 				return err
 			}
@@ -131,6 +135,7 @@ func (c *Conn) Stream(ctx context.Context, cb func(d StreamData)) error {
 func (c *Conn) Recv() (Message, error) {
 	// Read line from TCP socket.
 	message := Message{}
+
 	line, err := c.reader.ReadBytes('\n')
 	if err != nil {
 		return Message{}, err
@@ -184,7 +189,9 @@ func (c *Conn) Send(status string, body interface{}) error {
 //     < INVALID KEY FORMAT=BZEOT
 //
 func (c *Conn) authenticate(user, key string) error {
-	c.socket.SetDeadline(time.Now().Add(AuthTimeout))
+	if err := c.socket.SetDeadline(time.Now().Add(AuthTimeout)); err != nil {
+		return err
+	}
 
 	// Read 'READY' message.
 	msg, err := c.Recv()
@@ -210,7 +217,9 @@ func (c *Conn) authenticate(user, key string) error {
 	}
 
 	// Clear the deadline.
-	c.socket.SetDeadline(time.Time{})
+	if err := c.socket.SetDeadline(time.Time{}); err != nil {
+		return err
+	}
 
 	// Handle message status.
 	switch msg.Status {
@@ -218,6 +227,8 @@ func (c *Conn) authenticate(user, key string) error {
 		return ErrInvalidKeyFormat
 	case "INVALID KEY":
 		return ErrInvalidKey
+	case "DUPLICATE CONNECTION":
+		return ErrDuplicateConn
 	case "CONNECTED":
 		return nil
 	default:

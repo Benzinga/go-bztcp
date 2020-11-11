@@ -50,7 +50,7 @@ type PongData struct {
 	PingTime   string `json:"pingTime"`
 }
 
-// Author represents an author
+// Author represents an author.
 type Author struct {
 	Name string `json:"name"`
 }
@@ -80,7 +80,7 @@ type StreamData struct {
 	Link        interface{} `json:"link"`
 }
 
-// UnmarshalJSON implements json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler.
 func (t *Ticker) UnmarshalJSON(b []byte) error {
 	switch b[0] {
 	case '{':
@@ -133,10 +133,13 @@ func (m *Message) Encode() []byte {
 	buffer := bytes.Buffer{}
 	buffer.Grow(len(status) + len(data) + 10)
 	buffer.Write(status)
+
 	if m.Data != nil {
 		buffer.Write(cdt)
-		buffer.Write([]byte(data))
+		buffer.Write(data)
 	}
+
 	buffer.Write(eol)
+
 	return buffer.Bytes()
 }
