@@ -19,10 +19,6 @@ type (
 	// not valid.
 	InvalidKeyError struct{}
 
-	// DuplicateConnectionError occurs when a connection exists with
-	// given username already.
-	DuplicateConnectionError struct{}
-
 	// UnexpectedByteError occurs when the STREAM message contains an
 	// unexpected byte in the Tickers field (BZTCP v1.1+ protocol)
 	UnexpectedByteError byte
@@ -41,10 +37,6 @@ var (
 	// ErrInvalidKey is a static instance of InvalidKeyError.
 	ErrInvalidKey = InvalidKeyError{}
 )
-
-func (DuplicateConnectionError) Error() string {
-	return "duplicate connection for username"
-}
 
 // Error implements the error interface.
 func (InvalidReadyRespError) Error() string {
