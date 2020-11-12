@@ -36,11 +36,11 @@ import (
 	"context"
 	"fmt"
 
-	bztcp "github.com/Benzinga/go-bztcp"
+	"github.com/Benzinga/go-bztcp/bztcp"
 )
 
 func main() {
-	conn, err := bztcp.Dial("tcp-v1-1.benzinga.com:11337", "USER", "KEY")
+	conn, err := bztcp.Dial("tcp-v1.benzinga.io:11337", "USER", "KEY")
 
 	if err != nil {
 		panic(err)
