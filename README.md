@@ -3,7 +3,7 @@ This project provides a pure-Go implementation of the Benzinga TCP protocol.
 
 # Features
 
-  * Compatible with Go 1.8+
+  * Tested with Go 1.13+
   * Reasonably performant.
   * No external dependencies.
 
