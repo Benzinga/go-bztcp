@@ -4,11 +4,11 @@ import "fmt"
 
 type (
 	// InvalidReadyRespError occurs when the READY message does not occur as
-	// expected (BZTCP v1+ protocol)
+	// expected (BZTCP v1+ protocol).
 	InvalidReadyRespError struct{}
 
 	// InvalidAuthResponseError occurs when the response to the AUTH message is
-	// an unknown status
+	// an unknown status.
 	InvalidAuthResponseError struct{}
 
 	// InvalidKeyFormatError occurs when the server can't parse our key,
@@ -19,8 +19,12 @@ type (
 	// not valid.
 	InvalidKeyError struct{}
 
+	// DuplicateConnectionError occurs when a connection exists with
+	// given username already.
+	DuplicateConnectionError struct{}
+
 	// UnexpectedByteError occurs when the STREAM message contains an
-	// unexpected byte in the Tickers field (BZTCP v1.1+ protocol)
+	// unexpected byte in the Tickers field (BZTCP v1.1+ protocol).
 	UnexpectedByteError byte
 )
 
@@ -36,7 +40,14 @@ var (
 
 	// ErrInvalidKey is a static instance of InvalidKeyError.
 	ErrInvalidKey = InvalidKeyError{}
+
+	// ErrDuplicateConn is a static instance of DuplicateConnectionError.
+	ErrDuplicateConn = DuplicateConnectionError{}
 )
+
+func (DuplicateConnectionError) Error() string {
+	return "duplicate connection for username"
+}
 
 // Error implements the error interface.
 func (InvalidReadyRespError) Error() string {

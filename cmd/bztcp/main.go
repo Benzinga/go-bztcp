@@ -7,16 +7,22 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
-	bztcp "github.com/Benzinga/go-bztcp"
+	"github.com/Benzinga/go-bztcp/bztcp"
 )
 
-const defaultAddr = "tcp-v1-1.benzinga.com:11337"
+const defaultAddr = "tcp-v1.benzinga.io:11337"
 
 func main() {
-	var addr, user, key string
-	var tls, verbose bool
+	var (
+		addr    string
+		user    string
+		key     string
+		tls     bool
+		verbose bool
+	)
 
 	startTime := time.Now()
 
@@ -24,7 +30,7 @@ func main() {
 	log.SetFlags(log.Lshortfile)
 
 	// Create context.
-	context, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Parse flags.
@@ -40,16 +46,16 @@ func main() {
 	}
 
 	dialer := bztcp.Dial
-	tlsonoff := "off"
+
 	if tls {
 		dialer = bztcp.DialTLS
-		tlsonoff = "on"
 	}
 
 	// Dial server.
 	if verbose {
-		log.Printf("Connecting to %s as %s (TLS: %s)\n", addr, user, tlsonoff)
+		log.Printf("Connecting to '%s' as user '%s' (w/TLS: %t)\n", addr, user, tls)
 	}
+
 	conn, err := dialer(addr, user, key)
 	if err != nil {
 		log.Fatalln(err)
@@ -57,12 +63,14 @@ func main() {
 
 	// Listen for signals.
 	go func() {
-		ch := make(chan os.Signal)
-		signal.Notify(ch, os.Interrupt)
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		<-ch
+
 		if verbose {
 			log.Println("Received signal. Exiting...")
 		}
+
 		cancel()
 	}()
 
@@ -70,8 +78,10 @@ func main() {
 	if verbose {
 		log.Printf("Connected. Waiting for events.")
 	}
+
 	enc := json.NewEncoder(os.Stdout)
-	err = conn.Stream(context, func(stream bztcp.StreamData) {
+
+	err = conn.Stream(ctx, func(stream bztcp.StreamData) {
 		err = enc.Encode(stream)
 		if err != nil {
 			log.Fatalln(err)
@@ -82,6 +92,6 @@ func main() {
 	}
 
 	if verbose {
-		log.Println("Finished. Time elapsed:", time.Since(startTime))
+		log.Println("Finished. Runtime: ", time.Since(startTime), "Started At: ", startTime)
 	}
 }
