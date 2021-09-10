@@ -1,6 +1,8 @@
 # Go BzTCP
 This project provides a pure-Go implementation of the Benzinga TCP protocol.
 
+**Service Deprecated**
+
 # Features
 
   * Tested with Go 1.13+
